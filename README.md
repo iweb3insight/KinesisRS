@@ -10,7 +10,8 @@ Kinesis.rs is a stateless, JSON-first, multi-chain crypto trading execution laye
   <img src="docs/kinesis-rs.png" width="640" />
 </div>
 
-## Security Architecture
+
+## Security First CommitmentnnAt Kinesis.rs, we recognize that our users entrust us with the execution of their financial strategies. **Data security and private key protection are our highest priorities.** Every feature is designed with a "Security-by-Default" mindset to ensure that your sensitive credentials never leave your local environment.n## Security Architecture
 
 Kinesis.rs is built with a "Zero-Trust" approach to private key management and on-chain interaction.
 
