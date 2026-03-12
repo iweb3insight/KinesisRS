@@ -42,7 +42,7 @@ At Kinesis.rs, we recognize that our users entrust us with the execution of thei
 - **Multi-Platform Support**: Pre-compiled binaries available for Linux (amd64), macOS (Intel/M1), and Windows (amd64) via GitHub Releases.
 - **Solana Pathing**: Automatic detection and execution for Pump.fun and Raydium V3 (inc. Token-2022 support).
 
-## Getting Started
+## Installation
 1. Clone the repo.
 2. Copy `.env.example` to `.env` and add your keys.
 3. Build: `cargo build --release`.

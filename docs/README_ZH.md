@@ -37,7 +37,7 @@ Kinesis.rs 采用“零信任”原则管理私钥与链上交互。
 - **全平台支持**: 通过 GitHub Releases 提供针对 Linux (amd64)、macOS (Intel/M1) 及 Windows (amd64) 的预编译二进制包。
 - **智能路由**: 自动检测并执行 Solana 上的 Pump.fun 与 Raydium V3 路径（含 Token-2022 支持）。
 
-## 快速开始
+## 核心安装
 1. 克隆仓库。
 2. 将 `.env.example` 复制为 `.env` 并填入私钥。
 3. 编译: `cargo build --release`。
