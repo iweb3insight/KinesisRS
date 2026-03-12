@@ -2,7 +2,7 @@
 
 > "Kinesis：感知市场情绪，点亮链上生机"
 
-Kinesis.rs 是一个专为 LLM Agent 设计的无状态、JSON 优先、多链加密交易执行层。
+Kinesis.rs 是一个专为 LLM Agent 设计的无状态、JSON 优先、Agent 原生的多链交易执行层，具备极致的 **Agent 友好性 (Agentic Friendly)**。
 
 <div align="center">
   <img src="kinesis-rs.png" width="640" />

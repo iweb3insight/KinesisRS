@@ -2,7 +2,7 @@
 
 > "Kinesis: Converting market whispers into on-chain momentum."
 
-Kinesis.rs is a stateless, JSON-first, multi-chain crypto trading execution layer designed primarily for LLM Agents.
+Kinesis.rs is a stateless, JSON-first, Agent-native trading execution layer designed primarily for LLM Agents—built from the ground up to be perfectly **Agentic Friendly**.
 
 <div align="center">
   <img src="docs/kinesis-rs.png" width="640" />
