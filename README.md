@@ -1,3 +1,5 @@
+[**简体中文**](docs/README_ZH.md) | [**日本語**](docs/README_JA.md) | [**한국어**](docs/README_KO.md)
+
 # Kinesis.rs v0.6.0
 
 > "Kinesis: Converting market whispers into on-chain momentum."
@@ -74,3 +76,5 @@ Kinesis.rs is built for the agentic future. To support the ongoing testing and v
 
 ## Troubleshooting
 - **macOS Execution**: If you see `killed`, refer to the [macOS Troubleshooting Guide](docs/TROUBLESHOOTING_MACOS.md).
+## Project Roadmap
+See [ROADMAP.md](docs/ROADMAP.md) for planned features and milestones.
