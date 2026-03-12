@@ -43,3 +43,13 @@ Kinesis.rs is built for the agentic future. To support the ongoing testing and v
 - **ETH**: `0x1580b9604c47Dbef3A61ae5a3deFF7f6611f3C28`
 
 *All donations are used to cover network fees and liquidity costs for real-world execution testing.*
+
+## Troubleshooting (macOS)
+
+If you see `[1] killed` when running the binary on macOS, it is due to Gatekeeper quarantine. Run the following commands:
+
+```bash
+xattr -d com.apple.quarantine ~/Downloads/kinesis-rs
+chmod +x ~/Downloads/kinesis-rs
+./kinesis-rs --version
+```
