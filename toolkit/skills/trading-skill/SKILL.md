@@ -1,9 +1,9 @@
 ---
-name: freedom-agent-trading
+name: kinesis-trading-skill
 description: Multi-chain trading execution for BSC and Solana. Use for buying/selling tokens, quoting prices, and checking balances on PancakeSwap, Pump.fun, and Raydium. Supports Jito bundle submission and multi-RPC racing.
 ---
 
-# Trading Execution Skill (FreedomAgent)
+# Trading Execution Skill (Kinesis.rs)
 
 This skill enables Gemini CLI to act as a high-performance crypto trading agent.
 
@@ -25,4 +25,4 @@ This skill enables Gemini CLI to act as a high-performance crypto trading agent.
 - **[SETUP.md](references/setup.md)**: Environment variables and build instructions.
 
 ## Verification
-Run `./freedom-agent-trading/scripts/check_config.cjs` to verify your environment.
+Run `./kinesis-trading-skill/scripts/check_config.cjs` to verify your environment.
