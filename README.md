@@ -48,3 +48,28 @@ Kinesis.rs is built for the agentic future. To support the ongoing testing and v
 
 ## Troubleshooting
 - **macOS Execution**: If you see `killed`, refer to the [macOS Troubleshooting Guide](docs/TROUBLESHOOTING_MACOS.md).
+
+## CLI Usage
+
+```text
+Usage: kinesis-rs [OPTIONS] <COMMAND>
+
+Commands:
+  buy      Buy a token on a supported chain
+  sell     Sell a token on a supported chain
+  quote    Get a quote for a trade
+  balance  Check balance of native or token
+  approve  Approve a token for trading
+  config   Display current configuration
+  wallet   Display wallet address
+  detect   Detect Solana token path (Pump.fun or Raydium)
+  help     Print this message or the help of the given subcommand(s)
+
+Options:
+      --json             Global flag to force JSON output for agent consumption
+      --dry-run          Global flag to simulate transactions without sending them
+      --no-dry-run       Global flag to disable simulation and send the real transaction
+      --wallet <WALLET>  Selects the wallet to use based on environment variable suffix (e.g., _1, _2) [default: 1]
+  -h, --help             Print help (see more with '--help')
+  -V, --version          Print version
+```
