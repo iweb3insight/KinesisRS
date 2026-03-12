@@ -10,7 +10,43 @@ Kinesis.rs is not a wallet; it is a **highly optimized execution kernel** design
 
 ## 2. Core Components
 
-### 2.1 The Path Detector (Solana)
+```text
++-------------------------------------------------------------+
+|                      LLM Agent (Caller)                     |
+|           (Gemini CLI, Claude Code, OpenClaw)               |
++------------------------------+------------------------------+
+                               |
+                               v
++------------------------------+------------------------------+
+|                        Kinesis.rs CLI                       |
+|      (Input Validation, Env Loading, JSON Serialization)    |
++-------+----------------------+-----------------------+------+
+        |                      |                       |
+        v                      v                       v
++-------+-------+      +-------+-------+       +-------+------+
+|   Path        |      |   Parallel    |       |   Security   |
+|   Detector    |      |   Data Fetch  |       |   Signer     |
+| (Mint/Owner)  |      | (Hash/Nonce)  |       | (Enc Isolation)|
++-------+-------+      +-------+-------+       +-------+------+
+        |                      |                       |
+        +-----------+----------+-----------+-----------+
+                    |
+                    v
++-------------------+-----------------------------------------+
+|                  Multi-Chain Execution Engine               |
+|   +--------------------------+   +----------------------+   |
+|   |      Solana Driver       |   |      BSC Driver      |   |
+|   | (Pump.fun / Raydium V3)  |   | (Multi-RPC Racing)   |   |
+|   +--------------------------+   +----------------------+   |
++-------------------+-----------------------------------------+
+                    |
+                    v
++-------------------+-----------------------------------------+
+|                On-Chain Networks (Mainnet)                  |
+|         (Solana, BSC, Jito Block Engine, DEXs)              |
++-------------------------------------------------------------+
+```
+
 The detector automatically classifies tokens into three execution paths:
 1. **Pump.fun**: Native bonding curve logic (manual instruction construction).
 2. **Raydium V3**: Standard AMM/CLMM paths via Raydium Trade API.
@@ -70,4 +106,3 @@ Kinesis provides a `stages` array in every output, enabling Agents to audit exec
 - `quote`: Time spent on price discovery.
 - `simulate_execution`: Pre-flight latency.
 - `send_transaction`: Broadcast latency.
-
