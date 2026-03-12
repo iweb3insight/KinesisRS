@@ -81,6 +81,7 @@ Kinesis.rs is built for the agentic future. To support the ongoing testing and v
 - **BNB**: `0x1580b9604c47Dbef3A61ae5a3deFF7f6611f3C28`
 - **ETH**: `0x1580b9604c47Dbef3A61ae5a3deFF7f6611f3C28`
 - **USDC (Base)**: `0x1580b9604c47Dbef3A61ae5a3deFF7f6611f3C28` (Please send via **Base** network)
+
 *All donations are used to cover network fees and liquidity costs for real-world execution testing.*
 
 ## Disclaimer
