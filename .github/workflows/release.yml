@@ -1,0 +1,61 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+jobs:
+  publish:
+    name: Build and Publish
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        include:
+          - os: ubuntu-latest
+            target: x86_64-unknown-linux-gnu
+            artifact_name: kinesis-rs-linux-amd64
+            asset_name: kinesis-rs-v${{ github.ref_name }}-linux-amd64.tar.gz
+          - os: macos-latest
+            target: x86_64-apple-darwin
+            artifact_name: kinesis-rs-macos-amd64
+            asset_name: kinesis-rs-v${{ github.ref_name }}-macos-amd64.tar.gz
+          - os: macos-latest
+            target: aarch64-apple-darwin
+            artifact_name: kinesis-rs-macos-arm64
+            asset_name: kinesis-rs-v${{ github.ref_name }}-macos-arm64.tar.gz
+          - os: windows-latest
+            target: x86_64-pc-windows-msvc
+            artifact_name: kinesis-rs-windows-amd64
+            asset_name: kinesis-rs-v${{ github.ref_name }}-windows-amd64.zip
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: ${{ matrix.target }}
+
+      - name: Build binary
+        run: cargo build --release --target ${{ matrix.target }}
+
+      - name: Package (Unix)
+        if: runner.os != 'Windows'
+        run: |
+          cd target/${{ matrix.target }}/release
+          tar czf ../../../${{ matrix.asset_name }} kinesis-rs
+
+      - name: Package (Windows)
+        if: runner.os == 'Windows'
+        run: |
+          cd target/${{ matrix.target }}/release
+          7z a ../../../${{ matrix.asset_name }} kinesis-rs.exe
+
+      - name: Upload Release Assets
+        uses: softprops/action-gh-release@v2
+        with:
+          files: ${{ matrix.asset_name }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
