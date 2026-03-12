@@ -33,3 +33,13 @@ Kinesis.rs is built with a "Zero-Trust" approach to private key management and o
 3. Build: `cargo build --release`.
 4. Run: `./target/release/kinesis-rs balance --chain solana`.
 
+
+## Support the Mission
+
+Kinesis.rs is built for the agentic future. To support the ongoing testing and validation of features on Mainnet (Solana/BSC/ETH), consider donating to the following addresses:
+
+- **SOL**: `UFePGDrDS8xmutWkLKKGfgKUvacvLLSyQZ66AacKYUZ`
+- **BNB**: `0x1580b9604c47Dbef3A61ae5a3deFF7f6611f3C28`
+- **ETH**: `0x1580b9604c47Dbef3A61ae5a3deFF7f6611f3C28`
+
+*All donations are used to cover network fees and liquidity costs for real-world execution testing.*
