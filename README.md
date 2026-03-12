@@ -62,7 +62,7 @@ Options:
   -V, --version          Print version
 ```
 
-## Support the Mission
+## Donation
 
 Kinesis.rs is built for the agentic future. To support the ongoing testing and validation of features on Mainnet (Solana/BSC/ETH), consider donating to the following addresses:
 
