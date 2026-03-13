@@ -3,7 +3,7 @@ use crate::types::Chain;
 use serde::Serialize;
 
 #[derive(Parser, Debug, Serialize)]
-#[command(author, version, about, long_about = "FreedomAgent Agentic CLI - A stateless, JSON-first, multi-chain crypto trading execution layer.")]
+#[command(author, version, about, long_about = "KinesisRS Agentic CLI - A stateless, JSON-first, multi-chain crypto trading execution layer.")]
 pub struct Cli {
     #[command(subcommand)]
     pub command: Commands,
@@ -50,6 +50,15 @@ pub enum Commands {
 
     /// Detect Solana token path (Pump.fun or Raydium).
     Detect(DetectArgs),
+
+    /// Check transaction status by hash.
+    TxStatus(TxStatusArgs),
+
+    /// Show transaction history.
+    History(HistoryArgs),
+
+    /// Start MCP server for AI agent integration.
+    Mcp,
 }
 
 #[derive(Parser, Debug, Serialize)]
@@ -75,6 +84,14 @@ pub struct BuyArgs {
     /// Jito Tip amount in SOL (e.g., 0.0001).
     #[arg(long)]
     pub jito_tip: Option<f64>,
+
+    /// Number of retries on failure.
+    #[arg(long, default_value_t = 0)]
+    pub retry: u32,
+
+    /// Retry interval in seconds.
+    #[arg(long, default_value_t = 2)]
+    pub retry_interval: u64,
 }
 
 #[derive(Parser, Debug, Serialize)]
@@ -88,7 +105,7 @@ pub struct SellArgs {
     /// The blockchain to execute the trade on.
     #[arg(long, short, value_enum, default_value_t = Chain::Bsc)]
     pub chain: Chain,
-    
+
     /// Slippage tolerance in percentage (0-100).
     #[arg(long, default_value_t = 15.0)]
     pub slippage: f32,
@@ -100,6 +117,14 @@ pub struct SellArgs {
     /// Jito Tip amount in SOL (e.g., 0.0001).
     #[arg(long)]
     pub jito_tip: Option<f64>,
+
+    /// Number of retries on failure.
+    #[arg(long, default_value_t = 0)]
+    pub retry: u32,
+
+    /// Retry interval in seconds.
+    #[arg(long, default_value_t = 2)]
+    pub retry_interval: u64,
 }
 
 #[derive(Parser, Debug, Serialize)]
@@ -161,5 +186,34 @@ pub struct DetectArgs {
 
     /// The blockchain to detect the path on (only Solana supported).
     #[arg(long, short, value_enum)]
+    pub chain: Chain,
+}
+
+#[derive(Parser, Debug, Serialize)]
+pub struct TxStatusArgs {
+    /// The transaction hash to check.
+    pub tx_hash: String,
+
+    /// The blockchain to check status on.
+    #[arg(long, short, value_enum, default_value_t = Chain::Solana)]
+    pub chain: Chain,
+
+    /// Timeout in seconds for waiting (0 = check once).
+    #[arg(long, default_value_t = 0)]
+    pub timeout: u64,
+}
+
+#[derive(Parser, Debug, Serialize)]
+pub struct HistoryArgs {
+    /// Limit the number of history entries to show.
+    #[arg(long, short, default_value_t = 10)]
+    pub limit: usize,
+
+    /// Filter by status (all, success, failed).
+    #[arg(long, default_value = "all")]
+    pub status: String,
+
+    /// The blockchain to filter history on.
+    #[arg(long, short, value_enum, default_value_t = Chain::Solana)]
     pub chain: Chain,
 }

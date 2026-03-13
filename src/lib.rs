@@ -6,3 +6,4 @@ pub mod cli;
 pub mod config;
 pub mod types;
 pub mod solana;
+pub mod mcp;
