@@ -1,6 +1,6 @@
-# Kinesis.rs Rust v1.0
+# KinesisRS Rust v1.0
 
-Kinesis.rs 是一个专为 LLM Agent 设计的无状态、JSON 优先、多链加密交易执行层。
+KinesisRS 是一个专为 LLM Agent 设计的无状态、JSON 优先、多链加密交易执行层。
 
 ## 特性
 - **多链支持**: 支持 BNB 智能链 (BSC) 和 Solana 的原生执行。

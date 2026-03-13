@@ -1,6 +1,6 @@
-# Kinesis.rs BSC Execution Layer Usage Guide
+# KinesisRS BSC Execution Layer Usage Guide
 
-This guide details the features, configuration, and invocation methods of Kinesis.rs Rust v1.0 on BSC (BNB Smart Chain). This tool is designed as a "trading primitive" specifically for LLM Agents and automated workflows.
+This guide details the features, configuration, and invocation methods of KinesisRS Rust v1.0 on BSC (BNB Smart Chain). This tool is designed as a "trading primitive" specifically for LLM Agents and automated workflows.
 
 ---
 

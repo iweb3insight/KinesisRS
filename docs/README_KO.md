@@ -1,6 +1,6 @@
-# Kinesis.rs Rust v1.0
+# KinesisRS Rust v1.0
 
-Kinesis.rs는 LLM 에이전트를 위해 설계된 상태 비저장(stateless), JSON 우선, 멀티체인 암호화폐 거래 실행 레이어입니다.
+KinesisRS는 LLM 에이전트를 위해 설계된 상태 비저장(stateless), JSON 우선, 멀티체인 암호화폐 거래 실행 레이어입니다.
 
 ## 주요 기능
 - **멀티체인 지원**: BNB 스마트 체인(BSC) 및 Solana 기본 실행 지원.

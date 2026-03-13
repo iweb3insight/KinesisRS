@@ -1,6 +1,13 @@
-# Kinesis.rs Rust v1.0
+# KinesisRS Rust v1.0
 
 A stateless, JSON-first, multi-chain crypto trading execution layer for LLM Agents.
+
+---
+
+<div align="center">
+  <img src="docs/kinesis-rs.png" width="640" />
+</div>
+
 
 ## Features
 - **Stateless & Agent-First**: Communicates via standard JSON `TradeResult` protocol.

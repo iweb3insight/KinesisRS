@@ -1,4 +1,4 @@
-# Kinesis.rs Rust v1.0 Project Architecture
+# KinesisRS Rust v1.0 Project Architecture
 
 **Document Version**: 1.0  
 **Last Updated**: 2026-03-11  
@@ -17,7 +17,7 @@ flowchart TB
         USER[User/Agent]
     end
 
-    subgraph Kinesis["Kinesis.rs Rust v1.0"]
+    subgraph Kinesis["KinesisRS Rust v1.0"]
         direction TB
         
         subgraph CLI["CLI Access Layer"]
