@@ -1,10 +1,10 @@
-# Kinesis.rs v0.6.0
+# KinesisRS v0.6.0
 
 > "Kinesis: Converting market whispers into on-chain momentum."
 
 > 🚀 **Attention:** We noticed a surge of 128+ unique cloners recently! If you are using KinesisRS for your AI Agents, please join the discussion on [v0.7.0 Roadmap & Agent Integration](https://github.com/iweb3insight/KinesisRS/issues/19) to help us shape the Agent-native future.
 
-Kinesis.rs is a stateless, JSON-first, Agent-native trading execution layer designed primarily for LLM Agents—built from the ground up to be perfectly **Agentic Friendly**.
+KinesisRS is a stateless, JSON-first, Agent-native trading execution layer designed primarily for LLM Agents—built from the ground up to be perfectly **Agentic Friendly**.
 
 ---
 
@@ -15,7 +15,7 @@ Kinesis.rs is a stateless, JSON-first, Agent-native trading execution layer desi
 
 ## Security Architecture
 
-Kinesis.rs is built with a "Zero-Trust" approach to private key management and on-chain interaction.
+KinesisRS is built with a "Zero-Trust" approach to private key management and on-chain interaction.
 
 ### 1. Private Key Protection
 - **No Server-Side Storage**: Private keys are never uploaded to any server or cloud. They are loaded exclusively from local environment variables or secure storage and used only within the local execution process.
@@ -32,7 +32,7 @@ Kinesis.rs is built with a "Zero-Trust" approach to private key management and o
 
 ### 3. Security First
 
-At Kinesis.rs, we recognize that our users entrust us with the execution of their financial strategies. **Data security and private key protection are our highest priorities.** Every feature is designed with a "Security-by-Default" mindset to ensure that your sensitive credentials never leave your local environment.
+At KinesisRS, we recognize that our users entrust us with the execution of their financial strategies. **Data security and private key protection are our highest priorities.** Every feature is designed with a "Security-by-Default" mindset to ensure that your sensitive credentials never leave your local environment.
 
 ### 4. Simulation First
 - **Mandatory Dry-runs**: The system defaults to `--dry-run` mode, requiring explicit opt-out via `--no-dry-run`. This prevents unintended asset exposure due to logic or parameter errors.
@@ -77,7 +77,7 @@ Options:
 
 ## Donation
 
-Kinesis.rs is built for the agentic future. To support the ongoing testing and validation of features on Mainnet (Solana/BSC/ETH), consider donating to the following addresses:
+KinesisRS is built for the agentic future. To support the ongoing testing and validation of features on Mainnet (Solana/BSC/ETH), consider donating to the following addresses:
 
 - **SOL**: `UFePGDrDS8xmutWkLKKGfgKUvacvLLSyQZ66AacKYUZ`
 - **BNB**: `0x1580b9604c47Dbef3A61ae5a3deFF7f6611f3C28`
@@ -88,7 +88,7 @@ Kinesis.rs is built for the agentic future. To support the ongoing testing and v
 
 ## Disclaimer
 
-Kinesis.rs is a tool for **technical research and educational purposes only**.
+KinesisRS is a tool for **technical research and educational purposes only**.
 
 - This project does **NOT** constitute financial, investment, or legal advice.
 - Cryptocurrency trading involves significant risk of loss. The developers are not responsible for any financial losses, bugs, or security incidents incurred through the use of this software.
