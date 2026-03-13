@@ -1,7 +1,7 @@
-# Kinesis.rs 詳細使用ガイド
+# KinesisRS 詳細使用ガイド
 
 ## 1. コア設計理念
-Kinesis.rs は **エージェントファースト** な取引システムです。すべての設計は、LLM エージェント（Gemini、Claude など）が複雑な取引を安全かつ正確に実行できるように行われています。
+KinesisRS は **エージェントファースト** な取引システムです。すべての設計は、LLM エージェント（Gemini、Claude など）が複雑な取引を安全かつ正確に実行できるように行われています。
 
 - **ステートレス (Stateless)**: 各コマンドには実行に必要なすべてのコンテキストが含まれています。
 - **JSON ファースト**: エージェントが `TradeResult` を正確に解析できるように、常に `--json` フラグを使用することをお勧めします。
@@ -26,7 +26,7 @@ Kinesis.rs は **エージェントファースト** な取引システムです
 ### Jito Bundle 加速
 Solana チェーンでは、フロントランニング（MEV）を防止したり、極端な混雑時に取引を成立させたりするために、Jito を使用する必要があります。
 ```bash
-./kinesis_rs buy <TOKEN> 0.1 --chain solana --jito-tip 0.001
+./solana_claw_coin_cli buy <TOKEN> 0.1 --chain solana --jito-tip 0.001
 ```
 - **パラメータ**: `--jito-tip` の単位は SOL です。推奨範囲: 0.0001 - 0.01。
 

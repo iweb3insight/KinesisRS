@@ -3,7 +3,7 @@ name: kinesis-trading-skill
 description: Multi-chain trading execution for BSC and Solana. Use for buying/selling tokens, quoting prices, and checking balances on PancakeSwap, Pump.fun, and Raydium. Supports Jito bundle submission and multi-RPC racing.
 ---
 
-# Trading Execution Skill (Kinesis.rs)
+# Trading Execution Skill (KinesisRS)
 
 This skill enables Gemini CLI to act as a high-performance crypto trading agent.
 

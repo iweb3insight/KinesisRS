@@ -2,7 +2,7 @@
 const { execSync } = require('child_process');
 
 function check() {
-  console.log("Checking Kinesis.rs Environment...");
+  console.log("Checking KinesisRS Environment...");
   const vars = ['BSC_RPC_URL', 'SOL_RPC_URL', 'BSC_PRIVATE_KEY_1', 'SOL_PRIVATE_KEY_1'];
   vars.forEach(v => {
     if (process.env[v]) {
@@ -13,10 +13,10 @@ function check() {
   });
 
   try {
-    const version = execSync('./target/debug/kinesis_rs --version').toString().trim();
+    const version = execSync('./target/debug/solana_claw_coin_cli --version').toString().trim();
     console.log(`✅ Binary found: ${version}`);
   } catch (e) {
-    console.log(`❌ Binary not found at ./target/debug/kinesis_rs. Please run 'cargo build'.`);
+    console.log(`❌ Binary not found at ./target/debug/solana_claw_coin_cli. Please run 'cargo build'.`);
   }
 }
 
