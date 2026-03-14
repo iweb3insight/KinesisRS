@@ -25,7 +25,7 @@ borsh = { version = "1.6.0", features = ["derive"] }
 bs58 = "0.5"
 
 # Alloy meta-crate (Reverted to 0.8.3 for extreme stability)
-alloy = { version = "0.8.3", features = ["full"] }
+alloy = { version = "0.12.6", features = ["full"] }
 
 # Explicitly add these to help sol! macros resolve top-level package names
 alloy-sol-types = "0.8.26"
