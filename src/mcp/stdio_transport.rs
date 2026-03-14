@@ -124,6 +124,21 @@ impl StdioTransport {
             }
         };
 
+        // 检查是否为 notification (没有 id)
+        if request.id.is_null() {
+            // Notification 不需要响应
+            tracing::debug!(method = %request.method, "处理 notification");
+            match request.method.as_str() {
+                "initialized" => {
+                    tracing::info!("收到 initialized 通知，客户端初始化完成");
+                }
+                _ => {
+                    tracing::debug!(method = %request.method, "忽略 notification");
+                }
+            }
+            return String::new();
+        }
+
         // 路由到对应处理器
         let result = match request.method.as_str() {
             "initialize" => self.handle_initialize(protocol, &request.params).await,

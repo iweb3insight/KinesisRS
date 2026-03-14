@@ -13,7 +13,7 @@ use alloy::{
 };
 use futures::future::select_all;
 use thiserror::Error;
-use crate::types::{TransactionStatus, TransactionStatusResponse};
+use crate::types::{TransactionStatus, TransactionStatusResponse, HealthResult, RpcStatus, WalletStatus, Chain};
 use url::Url;
 use std::sync::Arc;
 use anyhow::Result;
@@ -237,6 +237,44 @@ impl BscExecutor {
     }
 
     pub fn wallet_address(&self) -> Address { self.signer.address() }
+
+    pub async fn get_health(&self) -> Result<HealthResult> {
+        let start = std::time::Instant::now();
+        let p = self.primary_provider();
+        
+        // 1. Check RPC Connection & Latency
+        let block_number_res = p.get_block_number().await;
+        let latency = start.elapsed().as_millis() as u64;
+        
+        let (connected, block_height) = match block_number_res {
+            Ok(n) => (true, Some(n)),
+            Err(_) => (false, None),
+        };
+
+        // 2. Check Wallet Readiness & Balance
+        let address = self.signer.address();
+        let balance_res = p.get_balance(address).await;
+        let (ready, balance_str) = match balance_res {
+            Ok(bal) => (true, (bal.to::<u128>() as f64 / 1e18).to_string()),
+            Err(_) => (false, "0".to_string()),
+        };
+
+        Ok(HealthResult {
+            success: connected && ready,
+            chain: Chain::Bsc,
+            rpc_status: RpcStatus {
+                connected,
+                latency_ms: latency,
+                endpoint: p.client().transport().url().to_string(),
+                block_height,
+            },
+            wallet_status: WalletStatus {
+                ready,
+                address: format!("{:x}", address),
+                balance: balance_str,
+            },
+        })
+    }
 
     pub async fn get_balance(&self, owner: Address, token_address: Option<Address>) -> Result<U256, ExecutorError> {
         self.race_rpc(move |p| {

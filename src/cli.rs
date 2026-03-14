@@ -19,7 +19,7 @@ pub struct Cli {
     /// Global flag to disable simulation and send the real transaction.
     #[arg(long, global = true, default_value_t = false, action = clap::ArgAction::SetTrue)]
     pub no_dry_run: bool,
-    
+
     /// Selects the wallet to use based on environment variable suffix (e.g., _1, _2).
     #[arg(long, global = true, default_value_t = 1)]
     pub wallet: u32,
@@ -29,7 +29,7 @@ pub struct Cli {
 pub enum Commands {
     /// Buy a token on a supported chain.
     Buy(BuyArgs),
-    
+
     /// Sell a token on a supported chain.
     Sell(SellArgs),
 
@@ -56,6 +56,12 @@ pub enum Commands {
 
     /// Show transaction history.
     History(HistoryArgs),
+
+    /// Check the health of the connection and wallet readiness.
+    Health(HealthArgs),
+
+    /// Configure AI Agent MCP integration.
+    Agent(AgentArgs),
 
     /// Start MCP server for AI agent integration.
     Mcp,
@@ -214,6 +220,28 @@ pub struct HistoryArgs {
     pub status: String,
 
     /// The blockchain to filter history on.
+    #[arg(long, short, value_enum, default_value_t = Chain::Solana)]
+    pub chain: Chain,
+}
+
+#[derive(Parser, Debug, Serialize)]
+pub struct AgentArgs {
+    #[command(subcommand)]
+    pub command: AgentCommands,
+}
+
+#[derive(Subcommand, Debug, Serialize)]
+pub enum AgentCommands {
+    /// Setup MCP configuration for an AI Agent platform.
+    Setup {
+        /// The platform to configure (opencode, gemini, claude).
+        platform: String,
+    },
+}
+
+#[derive(Parser, Debug, Serialize)]
+pub struct HealthArgs {
+    /// The blockchain to check health for.
     #[arg(long, short, value_enum, default_value_t = Chain::Solana)]
     pub chain: Chain,
 }

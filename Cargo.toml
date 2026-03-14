@@ -3,6 +3,7 @@ name = "kinesis-rs"
 version = "0.6.0"
 edition = "2021"
 license = "Apache-2.0"
+
 [dependencies]
 tokio = { version = "1", features = ["full"] }
 clap = { version = "4", features = ["derive", "env"] }
@@ -34,7 +35,21 @@ solana-sdk = "4.0.1"
 spl-associated-token-account = "8.0.0"
 rand = "0.8.5"
 
+# History storage
+uuid = { version = "1.10", features = ["v4"] }
+chrono = { version = "0.4", features = ["serde"] }
+dirs = "5.0"
+
+# MCP
+async-trait = "0.1"
+async-recursion = "1.1"
+
 [dev-dependencies]
 mockito = "1.4.0"
 assert_cmd = "2.0"
 predicates = "3.1"
+
+# History storage
+uuid = { version = "1.10", features = ["v4"] }
+chrono = { version = "0.4", features = ["serde"] }
+dirs = "5.0"

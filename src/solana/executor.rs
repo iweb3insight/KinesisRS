@@ -18,7 +18,7 @@ use std::str::FromStr;
 use spl_associated_token_account::get_associated_token_address_with_program_id;
 use rand::seq::SliceRandom;
 
-use crate::types::{TransactionStatus, TransactionStatusResponse};
+use crate::types::{TransactionStatus, TransactionStatusResponse, HealthResult, RpcStatus, WalletStatus, Chain};
 
 // --- Solana Constants ---
 const SOL_MINT_ADDRESS: &str = "So11111111111111111111111111111111111111112";
@@ -29,15 +29,11 @@ const RENT_SYSVAR: &str = "SysvarRent111111111111111111111111111111111";
 const SYSTEM_PROGRAM_ID: &str = "11111111111111111111111111111111";
 
 // --- Jito Constants ---
-const JITO_TIP_ACCOUNTS: [&str; 8] = [
+const JITO_TIP_ACCOUNTS: [&str; 4] = [
     "9649qRqpZbe96vSST9fM9qf4C65BPrV78vSNDtKx25n6",
     "HFqU5x63VTqvQss8hp11i4wVV8bD44PvwucfZ2bU7gY3",
     "Cw8CFyM9FkoMi7K7Crf6HNWofLH6S7X9S4FvAnXfXWp6",
     "ADa69ccYvU4NneBkY6B5VfJ2K246V97Q7D3t295P76uS",
-    "Df6U7qYvB63Gk5X9T4fN4p6v7z3o1X5b4X4vD5H2S3",
-    "ADuUkR4vq1vD4qJ6p3X4vH5p6v7z3o1X5b4X4vD5H2S3",
-    "3AVi9Tg9Uo68ayJjvSth9v6X4X4X4X4X4X4X4X4X4X4",
-    "DttWaMuVvSth9v6X4X4X4X4X4X4X4X4X4X4X4X4X4X4",
 ];
 const JITO_BLOCK_ENGINE_URL: &str = "https://mainnet.block-engine.jito.wtf/api/v1/bundles";
 const RAYDIUM_API_COMPUTE: &str = "https://transaction-v1.raydium.io";
@@ -192,6 +188,46 @@ impl SolanaExecutor {
 
     pub fn wallet_address(&self) -> Pubkey {
         self.signer.pubkey()
+    }
+
+    pub async fn get_health(&self) -> Result<HealthResult> {
+        let start = std::time::Instant::now();
+        
+        // 1. Check RPC Connection & Latency
+        let blockhash_res: Result<LatestBlockhashResponse> = self.call_rpc("getLatestBlockhash", serde_json::json!([{"commitment": "finalized"}])).await;
+        let latency = start.elapsed().as_millis() as u64;
+        
+        let (connected, block_height) = match blockhash_res {
+            Ok(_) => {
+                let height: Result<u64> = self.call_rpc("getBlockHeight", serde_json::json!([])).await;
+                (true, height.ok())
+            }
+            Err(_) => (false, None),
+        };
+
+        // 2. Check Wallet Readiness & Balance
+        let address = self.signer.pubkey().to_string();
+        let balance_res = self.get_balance(self.signer.pubkey(), None).await;
+        let (ready, balance_str) = match balance_res {
+            Ok(bal) => (true, (bal as f64 / 1_000_000_000.0).to_string()),
+            Err(_) => (false, "0".to_string()),
+        };
+
+        Ok(HealthResult {
+            success: connected && ready,
+            chain: Chain::Solana,
+            rpc_status: RpcStatus {
+                connected,
+                latency_ms: latency,
+                endpoint: self.rpc_url.clone(),
+                block_height,
+            },
+            wallet_status: WalletStatus {
+                ready,
+                address,
+                balance: balance_str,
+            },
+        })
     }
 
     pub async fn get_balance(&self, owner: Pubkey, token_address: Option<Pubkey>) -> Result<u64> {

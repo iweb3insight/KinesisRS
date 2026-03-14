@@ -100,6 +100,30 @@ pub enum Chain {
     Solana,
 }
 
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct HealthResult {
+    pub success: bool,
+    pub chain: Chain,
+    pub rpc_status: RpcStatus,
+    pub wallet_status: WalletStatus,
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct RpcStatus {
+    pub connected: bool,
+    pub latency_ms: u64,
+    pub endpoint: String,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub block_height: Option<u64>,
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct WalletStatus {
+    pub ready: bool,
+    pub address: String,
+    pub balance: String,
+}
+
 /// A simplified enumeration of error codes for basic categorization.
 /// (Maintained for backward compatibility or simple logic where full TradeError is overkill)
 #[derive(Debug, Serialize, Deserialize, Clone, Copy, PartialEq, Eq)]

@@ -157,6 +157,7 @@ impl McpError {
 
 /// 工具定义
 #[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct ToolDefinition {
     pub name: String,
     pub description: String,
@@ -193,6 +194,7 @@ impl ToolResult {
 
 /// 服务器信息
 #[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct ServerInfo {
     pub name: String,
     pub version: String,

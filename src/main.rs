@@ -4,7 +4,7 @@ use clap::Parser;
 use alloy_primitives::U256;
 use std::str::FromStr;
 use solana_sdk::pubkey::Pubkey;
-use solana_claw_coin_cli::{
+use kinesis_rs::{
     cli::{Cli, Commands},
     config::Config,
     types::{Stage, TradeResult, TradeError, Chain, TransactionHistoryEntry, HistoryManager},
@@ -12,7 +12,7 @@ use solana_claw_coin_cli::{
     solana::executor::SolanaExecutor,
     solana::detector::SolanaPathDetector,
 };
-use solana_claw_coin_cli::cli;
+use kinesis_rs::cli::{self, AgentCommands};
 
 const SOL_MINT_ADDRESS: &str = "So11111111111111111111111111111111111111112";
 
@@ -730,11 +730,94 @@ async fn main() {
                 }
             }
         }
+        Commands::Health(args) => {
+            // Handle health check
+            if args.chain == Chain::Solana {
+                let sol_key = config.get_sol_private_key(cli.wallet).expect("Failed to load private key");
+                let executor = SolanaExecutor::new(config.sol_rpc_url.clone(), &sol_key)
+                    .await
+                    .expect("Failed to create Solana executor");
+
+                match executor.get_health().await {
+                    Ok(health) => {
+                        if cli.json {
+                            println!("{}", serde_json::to_string(&health).unwrap());
+                        } else {
+                            println!("System Health: {:?}", health);
+                        }
+                    }
+                    Err(e) => {
+                        eprintln!("Error performing health check: {}", e);
+                        std::process::exit(1);
+                    }
+                }
+            } else if args.chain == Chain::Bsc {
+                let bsc_key = config.get_bsc_private_key(cli.wallet).expect("Failed to load private key");
+                let executor = match BscExecutor::new(config.clone(), bsc_key).await {
+                    Ok(ex) => ex,
+                    Err(e) => {
+                        eprintln!("Failed to create BSC executor: {}", e);
+                        std::process::exit(1);
+                    }
+                };
+
+                match executor.get_health().await {
+                    Ok(health) => {
+                        if cli.json {
+                            println!("{}", serde_json::to_string(&health).unwrap());
+                        } else {
+                            println!("System Health: {:?}", health);
+                        }
+                    }
+                    Err(e) => {
+                        eprintln!("Error performing health check: {}", e);
+                        std::process::exit(1);
+                    }
+                }
+            }
+        }
+        Commands::Agent(args) => {
+            // Handle Agent command
+            match &args.command {
+                AgentCommands::Setup { platform } => {
+                    // Find the agent-setup.sh script
+                    let script_path = std::path::PathBuf::from("scripts/agent-setup.sh");
+                    
+                    if !script_path.exists() {
+                        eprintln!("Error: agent-setup.sh not found. Please ensure you are running from the project directory.");
+                        std::process::exit(1);
+                    }
+                    
+                    println!("ℹ️  正在配置 {}...", platform);
+                    
+                    let status = std::process::Command::new("bash")
+                        .arg(&script_path)
+                        .arg("setup")
+                        .arg(platform)
+                        .status();
+                    
+                    match status {
+                        Ok(s) if s.success() => {
+                            println!("✅ {} 配置完成！", platform);
+                            std::process::exit(0);
+                        }
+                        Ok(s) => {
+                            eprintln!("Agent setup script failed with exit code: {:?}", s.code());
+                            std::process::exit(1);
+                        }
+                        Err(e) => {
+                            eprintln!("Failed to execute agent setup script: {}", e);
+                            std::process::exit(1);
+                        }
+                    }
+                }
+            }
+        }
         Commands::Mcp => {
             // Start MCP server for AI agent integration
             tracing::info!("Starting MCP server...");
 
-            let mcp_service = solana_claw_coin_cli::mcp::McpService::new(config.clone());
+            let mcp_service = kinesis_rs::mcp::McpService::new(config.clone());
             
             // Initialize MCP service
             mcp_service.initialize().await;

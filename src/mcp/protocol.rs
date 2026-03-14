@@ -1,7 +1,7 @@
 // src/mcp/protocol.rs
 
-use crate::mcp::types::*;
 use crate::mcp::errors::*;
+use crate::mcp::types::*;
 use serde_json::Value;
 
 /// MCP 协议处理器
@@ -19,7 +19,7 @@ impl Default for McpProtocol {
 impl McpProtocol {
     pub fn new() -> Self {
         Self {
-            version: "1.0".to_string(),
+            version: "2024-11-05".to_string(),
             server_info: ServerInfo::default(),
         }
     }
@@ -61,7 +61,8 @@ impl McpProtocol {
         let response = McpResponse::success(id, result);
         serde_json::to_string(&response).unwrap_or_else(|e| {
             tracing::error!(error = %e, "响应序列化失败");
-            r#"{"jsonrpc":"2.0","id":null,"error":{"code":-32603,"message":"Internal error"}}"#.to_string()
+            r#"{"jsonrpc":"2.0","id":null,"error":{"code":-32603,"message":"Internal error"}}"#
+                .to_string()
         })
     }
 
@@ -70,7 +71,8 @@ impl McpProtocol {
         let response = McpResponse::error(id, error);
         serde_json::to_string(&response).unwrap_or_else(|e| {
             tracing::error!(error = %e, "错误响应序列化失败");
-            r#"{"jsonrpc":"2.0","id":null,"error":{"code":-32603,"message":"Internal error"}}"#.to_string()
+            r#"{"jsonrpc":"2.0","id":null,"error":{"code":-32603,"message":"Internal error"}}"#
+                .to_string()
         })
     }
 
@@ -88,12 +90,15 @@ impl McpProtocol {
     pub fn handle_initialize(&self, params: &Value) -> Value {
         tracing::info!("处理 initialize 请求");
 
-        let client_info = params.get("client_info").unwrap_or(&Value::Null);
+        let client_info = params
+            .get("clientInfo")
+            .or_else(|| params.get("client_info"))
+            .unwrap_or(&Value::Null);
         tracing::debug!(client_info = ?client_info, "客户端信息");
 
         serde_json::json!({
-            "protocol_version": self.version,
-            "server_info": self.server_info,
+            "protocolVersion": self.version,
+            "serverInfo": self.server_info,
             "capabilities": {
                 "tools": {
                     "listChanged": true
@@ -196,7 +201,7 @@ mod tests {
         assert!(result.is_err());
         // 可能是 ParseError 或 InvalidRequest
         match result.unwrap_err() {
-            McpProtocolError::ParseError(_) | McpProtocolError::InvalidRequest(_) => {},
+            McpProtocolError::ParseError(_) | McpProtocolError::InvalidRequest(_) => {}
             _ => panic!("Expected ParseError or InvalidRequest"),
         }
     }
@@ -232,8 +237,8 @@ mod tests {
         });
 
         let result = protocol.handle_initialize(&params);
-        assert!(result.get("protocol_version").is_some());
-        assert!(result.get("server_info").is_some());
+        assert!(result.get("protocolVersion").is_some());
+        assert!(result.get("serverInfo").is_some());
         assert!(result.get("capabilities").is_some());
     }
 }
