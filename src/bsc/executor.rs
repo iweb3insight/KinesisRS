@@ -13,8 +13,10 @@ use alloy::{
 };
 use futures::future::select_all;
 use thiserror::Error;
+use crate::types::{TransactionStatus, TransactionStatusResponse};
 use url::Url;
 use std::sync::Arc;
+use anyhow::Result;
 
 // Known Router Addresses
 const PANCAKE_ROUTER_MAINNET: &str = "0x10ED43C718714eb63d5aA57B78B54704E256024E";
@@ -145,6 +147,93 @@ impl BscExecutor {
                 }
             }
         }).await
+    }
+
+    pub async fn get_bsc_transaction_status(&self, tx_hash: &str, timeout_secs: u64) -> Result<TransactionStatusResponse> {
+        let hash: alloy::primitives::FixedBytes<32> = tx_hash.parse().map_err(|_| anyhow::anyhow!("Invalid transaction hash format"))?;
+        
+        // If timeout is 0, check once
+        if timeout_secs == 0 {
+            return self.check_bsc_transaction_status_once(hash).await;
+        }
+
+        // Poll with timeout
+        let start = std::time::Instant::now();
+        while start.elapsed().as_secs() < timeout_secs {
+            match self.check_bsc_transaction_status_once(hash).await {
+                Ok(response) => {
+                    if response.status != TransactionStatus::Pending {
+                        return Ok(response);
+                    }
+                }
+                Err(_) => {} // Continue polling
+            }
+            tokio::time::sleep(std::time::Duration::from_secs(2)).await;
+        }
+
+        Ok(TransactionStatusResponse {
+            status: TransactionStatus::Pending,
+            tx_hash: tx_hash.to_string(),
+            slot: None,
+            confirmations: None,
+            error: Some("Timeout waiting for transaction confirmation".to_string()),
+        })
+    }
+
+    async fn check_bsc_transaction_status_once(&self, hash: alloy::primitives::FixedBytes<32>) -> Result<TransactionStatusResponse> {
+        let p = self.primary_provider();
+        
+        // First check if the transaction exists
+        let tx = match p.get_transaction_by_hash(hash).await {
+            Ok(Some(tx)) => tx,
+            Ok(None) => return Ok(TransactionStatusResponse {
+                status: TransactionStatus::NotFound,
+                tx_hash: format!("0x{:x}", hash),
+                slot: None,
+                confirmations: None,
+                error: None,
+            }),
+            Err(_) => return Ok(TransactionStatusResponse {
+                status: TransactionStatus::NotFound,
+                tx_hash: format!("0x{:x}", hash),
+                slot: None,
+                confirmations: None,
+                error: None,
+            }),
+        };
+
+        // If transaction exists, check receipt for status
+        let receipt = match p.get_transaction_receipt(hash).await {
+            Ok(Some(receipt)) => receipt,
+            _ => return Ok(TransactionStatusResponse {
+                status: TransactionStatus::Pending,
+                tx_hash: format!("0x{:x}", hash),
+                slot: tx.block_number,
+                confirmations: Some(0),
+                error: None,
+            }),
+        };
+
+        let status = if receipt.status() {
+            TransactionStatus::Success
+        } else {
+            TransactionStatus::Failed
+        };
+
+        let latest_block = p.get_block_number().await.unwrap_or(receipt.block_number.unwrap_or(0));
+        let confirmations = if let Some(bn) = receipt.block_number {
+            if latest_block >= bn { latest_block - bn + 1 } else { 1 }
+        } else {
+            0
+        };
+
+        Ok(TransactionStatusResponse {
+            status,
+            tx_hash: format!("0x{:x}", hash),
+            slot: receipt.block_number,
+            confirmations: Some(confirmations),
+            error: if !receipt.status() { Some("Transaction reverted".to_string()) } else { None },
+        })
     }
 
     pub fn wallet_address(&self) -> Address { self.signer.address() }

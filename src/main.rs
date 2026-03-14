@@ -4,14 +4,15 @@ use clap::Parser;
 use alloy_primitives::U256;
 use std::str::FromStr;
 use solana_sdk::pubkey::Pubkey;
-use kinesis_rs::{
+use solana_claw_coin_cli::{
     cli::{Cli, Commands},
     config::Config,
-    types::{Stage, TradeResult, TradeError, Chain},
+    types::{Stage, TradeResult, TradeError, Chain, TransactionHistoryEntry, HistoryManager},
     bsc::executor::{BscExecutor, ExecutorError},
     solana::executor::SolanaExecutor,
-    // solana::detector::Path, // Removed as it is unused.
+    solana::detector::SolanaPathDetector,
 };
+use solana_claw_coin_cli::cli;
 
 const SOL_MINT_ADDRESS: &str = "So11111111111111111111111111111111111111112";
 
@@ -32,7 +33,7 @@ async fn main() {
 
     match &cli.command {
         Commands::Buy(args) => {
-            if let Err(e) = kinesis_rs::cli::validate_args(args.slippage, args.tip_rate) {
+            if let Err(e) = cli::validate_args(args.slippage, args.tip_rate) {
                 eprintln!("Invalid arguments: {}", e);
                 std::process::exit(1);
             }
@@ -75,21 +76,38 @@ async fn main() {
 
                 let buy_start = std::time::Instant::now();
                 let jito_tip_lamports = args.jito_tip.map(|sol| (sol * 1_000_000_000.0) as u64);
-                match executor.buy(&args.token_address, args.amount, (args.slippage * 100.0) as u16, dry_run, jito_tip_lamports).await {
-                    Ok(sig) => {
-                        result.success = true;
-                        result.tx_hash = Some(sig);
-                        result.stages.push(Stage {
-                            name: "buy".to_string(),
-                            duration_ms: buy_start.elapsed().as_millis() as u64,
-                            input: Some(serde_json::json!({ "amount": args.amount, "slippage_bps": (args.slippage * 100.0) as u16, "jito_tip": args.jito_tip })),
-                            output: Some(serde_json::json!({ "status": "success" })),
-                        });
+                
+                // Retry logic with exponential backoff
+                let mut attempt = 0;
+                let max_attempts = args.retry + 1;
+                let mut last_error: Option<String> = None;
+                
+                while attempt < max_attempts {
+                    match executor.buy(&args.token_address, args.amount, (args.slippage * 100.0) as u16, dry_run, jito_tip_lamports).await {
+                        Ok(sig) => {
+                            result.success = true;
+                            result.tx_hash = Some(sig);
+                            result.stages.push(Stage {
+                                name: "buy".to_string(),
+                                duration_ms: buy_start.elapsed().as_millis() as u64,
+                                input: Some(serde_json::json!({ "amount": args.amount, "slippage_bps": (args.slippage * 100.0) as u16, "jito_tip": args.jito_tip, "attempt": attempt + 1 })),
+                                output: Some(serde_json::json!({ "status": "success" })),
+                            });
+                            break;
+                        }
+                        Err(e) => {
+                            last_error = Some(e.to_string());
+                            attempt += 1;
+                            if attempt < max_attempts {
+                                tracing::warn!("Buy attempt {} failed: {}. Retrying in {}s...", attempt, last_error.as_ref().unwrap(), args.retry_interval);
+                                tokio::time::sleep(std::time::Duration::from_secs(args.retry_interval)).await;
+                            }
+                        }
                     }
-                    Err(e) => {
-                        result.success = false;
-                        result.error = Some(TradeError::ContractError { message: e.to_string() });
-                    }
+                }
+                
+                if !result.success {
+                    result.error = Some(TradeError::ContractError { message: format!("Failed after {} attempts: {}", max_attempts, last_error.unwrap_or_default()) });
                 }
 
                 if cli.json {
@@ -97,6 +115,19 @@ async fn main() {
                 } else {
                     println!("{}", serde_json::to_string_pretty(&result).unwrap());
                 }
+
+                // Save to history
+                let history_manager = HistoryManager::new();
+                let history_entry = TransactionHistoryEntry::from_trade_result(
+                    &result,
+                    "buy",
+                    &args.token_address,
+                    &args.amount.to_string(),
+                );
+                if let Err(e) = history_manager.save(&history_entry) {
+                    tracing::warn!("Failed to save transaction history: {}", e);
+                }
+
                 return;
             }
 
@@ -194,7 +225,7 @@ async fn main() {
             }
         }
         Commands::Sell(args) => {
-            if let Err(e) = kinesis_rs::cli::validate_args(args.slippage, args.tip_rate) {
+            if let Err(e) = cli::validate_args(args.slippage, args.tip_rate) {
                 eprintln!("Invalid arguments: {}", e);
                 std::process::exit(1);
             }
@@ -232,23 +263,39 @@ async fn main() {
                 // For Solana, sell amount is usually in base units (e.g., 1000000 for 1 token if 6 decimals)
                 // However, our CLI takes f64. Assuming 6 decimals for now for SPL tokens.
                 // TODO: Better decimal handling.
-                let amount_base = (args.amount * 1_000_000.0) as u64; 
-
-                match executor.sell(&args.token_address, amount_base, (args.slippage * 100.0) as u16, dry_run, jito_tip_lamports).await {
-                    Ok(sig) => {
-                        result.success = true;
-                        result.tx_hash = Some(sig);
-                        result.stages.push(Stage {
-                            name: "sell".to_string(),
-                            duration_ms: sell_start.elapsed().as_millis() as u64,
-                            input: Some(serde_json::json!({ "amount": args.amount, "slippage_bps": (args.slippage * 100.0) as u16, "jito_tip": args.jito_tip })),
-                            output: Some(serde_json::json!({ "status": "success" })),
-                        });
+                let amount_base = (args.amount * 1_000_000.0) as u64;
+                
+                // Retry logic with exponential backoff
+                let mut attempt = 0;
+                let max_attempts = args.retry + 1;
+                let mut last_error: Option<String> = None;
+                
+                while attempt < max_attempts {
+                    match executor.sell(&args.token_address, amount_base, (args.slippage * 100.0) as u16, dry_run, jito_tip_lamports).await {
+                        Ok(sig) => {
+                            result.success = true;
+                            result.tx_hash = Some(sig);
+                            result.stages.push(Stage {
+                                name: "sell".to_string(),
+                                duration_ms: sell_start.elapsed().as_millis() as u64,
+                                input: Some(serde_json::json!({ "amount": args.amount, "slippage_bps": (args.slippage * 100.0) as u16, "jito_tip": args.jito_tip, "attempt": attempt + 1 })),
+                                output: Some(serde_json::json!({ "status": "success" })),
+                            });
+                            break;
+                        }
+                        Err(e) => {
+                            last_error = Some(e.to_string());
+                            attempt += 1;
+                            if attempt < max_attempts {
+                                tracing::warn!("Sell attempt {} failed: {}. Retrying in {}s...", attempt, last_error.as_ref().unwrap(), args.retry_interval);
+                                tokio::time::sleep(std::time::Duration::from_secs(args.retry_interval)).await;
+                            }
+                        }
                     }
-                    Err(e) => {
-                        result.success = false;
-                        result.error = Some(TradeError::ContractError { message: e.to_string() });
-                    }
+                }
+                
+                if !result.success {
+                    result.error = Some(TradeError::ContractError { message: format!("Failed after {} attempts: {}", max_attempts, last_error.unwrap_or_default()) });
                 }
 
                 if cli.json {
@@ -256,6 +303,19 @@ async fn main() {
                 } else {
                     println!("{}", serde_json::to_string_pretty(&result).unwrap());
                 }
+
+                // Save to history
+                let history_manager = HistoryManager::new();
+                let history_entry = TransactionHistoryEntry::from_trade_result(
+                    &result,
+                    "sell",
+                    &args.token_address,
+                    &args.amount.to_string(),
+                );
+                if let Err(e) = history_manager.save(&history_entry) {
+                    tracing::warn!("Failed to save transaction history: {}", e);
+                }
+
                 return;
             }
 
@@ -577,7 +637,7 @@ async fn main() {
                 std::process::exit(1);
             }
 
-            let detector = kinesis_rs::solana::detector::SolanaPathDetector::new(config.sol_rpc_url.clone())
+            let detector = SolanaPathDetector::new(config.sol_rpc_url.clone())
                 .await
                 .expect("Failed to create SolanaPathDetector");
             
@@ -595,15 +655,108 @@ async fn main() {
                 }
             }
         }
+        Commands::TxStatus(args) => {
+            // Handle transaction status check
+            if args.chain == Chain::Solana {
+                let sol_key = config.get_sol_private_key(cli.wallet).expect("Failed to load private key");
+                let executor = SolanaExecutor::new(config.sol_rpc_url.clone(), &sol_key)
+                    .await
+                    .expect("Failed to create Solana executor");
+
+                match executor.get_solana_transaction_status(&args.tx_hash, args.timeout).await {
+                    Ok(status) => {
+                        if cli.json {
+                            println!("{}", serde_json::to_string(&status).unwrap());
+                        } else {
+                            println!("Transaction Status: {:?}", status);
+                        }
+                    }
+                    Err(e) => {
+                        eprintln!("Error checking transaction status: {}", e);
+                        std::process::exit(1);
+                    }
+                }
+            } else if args.chain == Chain::Bsc {
+                let bsc_key = config.get_bsc_private_key(cli.wallet).expect("Failed to load private key");
+                let executor = match BscExecutor::new(config.clone(), bsc_key).await {
+                    Ok(ex) => ex,
+                    Err(e) => {
+                        eprintln!("Failed to create BSC executor: {}", e);
+                        std::process::exit(1);
+                    }
+                };
+
+                match executor.get_bsc_transaction_status(&args.tx_hash, args.timeout).await {
+                    Ok(status) => {
+                        if cli.json {
+                            println!("{}", serde_json::to_string(&status).unwrap());
+                        } else {
+                            println!("Transaction Status: {:?}", status);
+                        }
+                    }
+                    Err(e) => {
+                        eprintln!("Error checking transaction status: {}", e);
+                        std::process::exit(1);
+                    }
+                }
+            } else {
+                eprintln!("Error: TxStatus command unsupported chain.");
+                std::process::exit(1);
+            }
+        }
+        Commands::History(args) => {
+            // Handle transaction history
+            let history_manager = HistoryManager::new();
+            let history = history_manager.get_history(args.limit, &args.status, args.chain);
+
+            if cli.json {
+                println!("{}", serde_json::json!({ "success": true, "history": history, "count": history.len() }));
+            } else {
+                if history.is_empty() {
+                    println!("No transaction history found.");
+                } else {
+                    println!("Transaction History ({} entries):", history.len());
+                    for entry in &history {
+                        let status_icon = if entry.status == "success" { "✅" } else { "❌" };
+                        println!("  {} [{}] {} {} -> {} ({})",
+                            status_icon,
+                            entry.tx_type,
+                            entry.token,
+                            entry.amount_in,
+                            entry.amount_out.as_deref().unwrap_or("N/A"),
+                            entry.timestamp
+                        );
+                    }
+                }
+            }
+        }
+        Commands::Mcp => {
+            // Start MCP server for AI agent integration
+            tracing::info!("Starting MCP server...");
+
+            let mcp_service = solana_claw_coin_cli::mcp::McpService::new(config.clone());
+            
+            // Initialize MCP service
+            mcp_service.initialize().await;
+
+            // Start MCP stdio server
+            match mcp_service.start().await {
+                Ok(_) => {
+                    tracing::info!("MCP server stopped");
+                }
+                Err(e) => {
+                    eprintln!("MCP server error: {}", e);
+                    std::process::exit(1);
+                }
+            }
+        }
     }
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
-    use kinesis_rs::cli::{Cli, Commands};
     use serde_json::json;
-    use kinesis_rs::types::{Chain, TradeError};
 
     #[test]
     fn test_trade_result_success_serialization() {
@@ -699,7 +852,7 @@ mod tests {
 
         assert!(cli.json);
         assert_eq!(cli.wallet, 2);
-        assert!(dry_run);
+        assert!(cli.dry_run);
 
         match cli.command {
             Commands::Buy(args) => {

@@ -18,6 +18,8 @@ use std::str::FromStr;
 use spl_associated_token_account::get_associated_token_address_with_program_id;
 use rand::seq::SliceRandom;
 
+use crate::types::{TransactionStatus, TransactionStatusResponse};
+
 // --- Solana Constants ---
 const SOL_MINT_ADDRESS: &str = "So11111111111111111111111111111111111111112";
 const PUMP_FUN_PROGRAM_ID: &str = "6EF8rrecthR5Dkzon8Nwu78hRvfCKubJ14M5uBEwF6P";
@@ -213,21 +215,19 @@ impl SolanaExecutor {
     }
 
     /// Get transaction status with optional polling
-    pub async fn get_transaction_status(&self, tx_hash: &str, timeout: u64) -> Result<serde_json::Value> {
-        use std::time::Duration;
-
+    pub async fn get_solana_transaction_status(&self, tx_hash: &str, timeout_secs: u64) -> Result<TransactionStatusResponse> {
         // If timeout is 0, check once
-        if timeout == 0 {
-            return self.check_transaction_status_once(tx_hash).await;
+        if timeout_secs == 0 {
+            return self.check_solana_transaction_status_once(tx_hash).await;
         }
 
         // Poll with timeout
         let start = std::time::Instant::now();
-        while start.elapsed().as_secs() < timeout {
-            match self.check_transaction_status_once(tx_hash).await {
-                Ok(status) => {
-                    if status["confirmationStatus"] != "processed" {
-                        return Ok(status);
+        while start.elapsed().as_secs() < timeout_secs {
+            match self.check_solana_transaction_status_once(tx_hash).await {
+                Ok(response) => {
+                    if response.status != TransactionStatus::Pending {
+                        return Ok(response);
                     }
                 }
                 Err(_) => {} // Continue polling
@@ -235,34 +235,65 @@ impl SolanaExecutor {
             tokio::time::sleep(Duration::from_secs(2)).await;
         }
 
-        Err(anyhow!("Timeout waiting for transaction confirmation"))
+        Ok(TransactionStatusResponse {
+            status: TransactionStatus::Pending,
+            tx_hash: tx_hash.to_string(),
+            slot: None,
+            confirmations: None,
+            error: Some("Timeout waiting for transaction confirmation".to_string()),
+        })
     }
 
-    async fn check_transaction_status_once(&self, tx_hash: &str) -> Result<serde_json::Value> {
+    async fn check_solana_transaction_status_once(&self, tx_hash: &str) -> Result<TransactionStatusResponse> {
         let params = serde_json::json!([
             tx_hash,
             { "encoding": "json", "commitment": "confirmed" }
         ]);
-        let response: serde_json::Value = self.call_rpc("getTransaction", params).await?;
+        
+        let response: serde_json::Value = match self.call_rpc("getTransaction", params).await {
+            Ok(res) => res,
+            Err(_) => return Ok(TransactionStatusResponse {
+                status: TransactionStatus::NotFound,
+                tx_hash: tx_hash.to_string(),
+                slot: None,
+                confirmations: None,
+                error: None,
+            }),
+        };
         
         if response.is_null() {
-            return Err(anyhow!("Transaction not found"));
+            return Ok(TransactionStatusResponse {
+                status: TransactionStatus::NotFound,
+                tx_hash: tx_hash.to_string(),
+                slot: None,
+                confirmations: None,
+                error: None,
+            });
         }
 
-        let mut result = serde_json::json!({
-            "tx_hash": tx_hash,
-            "found": true,
-            "slot": response["slot"],
-            "confirmationStatus": response["meta"]["confirmationStatus"],
-            "err": response["meta"]["err"],
-        });
+        let slot = response["slot"].as_u64();
+        let meta = &response["meta"];
+        let err = meta["err"].clone();
+        
+        let status = if err.is_null() {
+            TransactionStatus::Success
+        } else {
+            TransactionStatus::Failed
+        };
 
-        if let Some(meta) = response.get("meta") {
-            result["success"] = serde_json::json!(meta["err"].is_null());
-            result["fee"] = meta["fee"].clone();
-        }
+        let error_msg = if !err.is_null() {
+            Some(err.to_string())
+        } else {
+            None
+        };
 
-        Ok(result)
+        Ok(TransactionStatusResponse {
+            status,
+            tx_hash: tx_hash.to_string(),
+            slot,
+            confirmations: Some(1), // If getTransaction returns it, it's at least confirmed
+            error: error_msg,
+        })
     }
 
     fn get_random_jito_tip_account(&self) -> Pubkey {
