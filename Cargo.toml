@@ -33,7 +33,7 @@ alloy-primitives = "0.8.26"
 alloy-contract = "0.8.3"
 solana-sdk = "4.0.1"
 spl-associated-token-account = "8.0.0"
-rand = "0.8.5"
+rand = "0.9.2"
 
 # History storage
 uuid = { version = "1.10", features = ["v4"] }
