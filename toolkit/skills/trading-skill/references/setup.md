@@ -8,6 +8,6 @@
 - `JITO_RPC_URL`: (Optional) Jito Block Engine URL.
 
 ## Binary Usage
-The skill assumes the `kinesis_rs` binary is built and available in the project root or added to PATH.
+The skill assumes the `solana_claw_coin_cli` binary is built and available in the project root or added to PATH.
 To build: `cargo build --release`
-Binary location: `target/release/kinesis_rs`
+Binary location: `target/release/solana_claw_coin_cli`

@@ -1,7 +1,7 @@
-# Kinesis.rs Detailed Usage Guide
+# KinesisRS Detailed Usage Guide
 
 ## 1. Core Design Philosophy
-Kinesis.rs is an **Agent-First** trading system. Every design choice is made to ensure LLM Agents (like Gemini, Claude) can execute complex trades safely and precisely.
+KinesisRS is an **Agent-First** trading system. Every design choice is made to ensure LLM Agents (like Gemini, Claude) can execute complex trades safely and precisely.
 
 - **Stateless**: Each command contains all the context needed for execution.
 - **JSON-First**: We recommend always using the `--json` flag so the Agent can precisely parse the `TradeResult`.
@@ -26,7 +26,7 @@ Kinesis.rs is an **Agent-First** trading system. Every design choice is made to 
 ### Jito Bundle Acceleration
 On Solana, to prevent front-running (MEV) or to land trades during congestion, Jito must be used:
 ```bash
-./kinesis_rs buy <TOKEN> 0.1 --chain solana --jito-tip 0.001
+./solana_claw_coin_cli buy <TOKEN> 0.1 --chain solana --jito-tip 0.001
 ```
 - **Parameter**: `--jito-tip` is in SOL. Recommended range: 0.0001 - 0.01.
 
